@@ -58,6 +58,32 @@ ZHIPU_API_KEY=你的key PORT=8092 ./scripts/start-zhipu.sh
 - `8094` -> 通义千问
 - `8095` -> 小米 MiMo
 
+Codex 客户端里填写：
+
+- 智谱公网：`http://你的机器IP:8092/v1`
+- DeepSeek：`http://你的机器IP:8093/v1`
+- 通义千问：`http://你的机器IP:8094/v1`
+- 小米 MiMo：`http://你的机器IP:8095/v1`
+
+API Key 可以填任意非空字符串，真正访问上游用的是 `configs/model-keys.env` 里的 key。
+
+## 验证服务
+
+启动后可以先检查健康状态：
+
+```bash
+curl http://127.0.0.1:8092/health
+curl http://127.0.0.1:8093/health
+curl http://127.0.0.1:8094/health
+curl http://127.0.0.1:8095/health
+```
+
+也可以查看暴露给 Codex 的模型名：
+
+```bash
+curl http://127.0.0.1:8092/v1/models
+```
+
 ## 当前支持
 
 - Python `3.8+`
@@ -119,6 +145,10 @@ bridge 会先把这些名称映射到上游厂商模型名。
 │   └── start-zhipu.sh
 └── src/
 ```
+
+## 变更记录
+
+见 [CHANGELOG.md](CHANGELOG.md)。
 
 ## 开源协议
 

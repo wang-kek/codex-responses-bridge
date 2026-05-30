@@ -58,6 +58,32 @@ Default port map:
 - `8094` -> Qwen
 - `8095` -> MiMo
 
+Use these Base URLs in Codex:
+
+- Zhipu public: `http://your-host-ip:8092/v1`
+- DeepSeek: `http://your-host-ip:8093/v1`
+- Qwen: `http://your-host-ip:8094/v1`
+- MiMo: `http://your-host-ip:8095/v1`
+
+The Codex client API key can be any non-empty string. Upstream keys come from `configs/model-keys.env`.
+
+## Check Services
+
+After startup, check health:
+
+```bash
+curl http://127.0.0.1:8092/health
+curl http://127.0.0.1:8093/health
+curl http://127.0.0.1:8094/health
+curl http://127.0.0.1:8095/health
+```
+
+List models exposed to Codex:
+
+```bash
+curl http://127.0.0.1:8092/v1/models
+```
+
 ## Supported
 
 - Python `3.8+`
@@ -108,6 +134,10 @@ See:
 │   └── start-zhipu.sh
 └── src/
 ```
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md).
 
 ## License
 
