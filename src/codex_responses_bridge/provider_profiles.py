@@ -144,6 +144,23 @@ def sanitize_openai_chat_payload(
                 sanitized.pop(key, None)
                 if key not in removed_fields:
                     removed_fields.append(key)
+    if upstream.provider != "deepseek":
+        messages = sanitized.get("messages")
+        if isinstance(messages, list):
+            cleaned_messages = []
+            stripped_message_reasoning = False
+            for message in messages:
+                if not isinstance(message, dict):
+                    cleaned_messages.append(message)
+                    continue
+                if "reasoning_content" in message:
+                    message = dict(message)
+                    message.pop("reasoning_content", None)
+                    stripped_message_reasoning = True
+                cleaned_messages.append(message)
+            sanitized["messages"] = cleaned_messages
+            if stripped_message_reasoning:
+                removed_fields.append("messages.reasoning_content")
 
     if upstream.extra_body:
         sanitized.update(upstream.extra_body)

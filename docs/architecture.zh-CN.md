@@ -2,88 +2,42 @@
 
 ## 设计目标
 
-- 精准解决 Codex `Responses API` 到多种上游协议的转换问题
-- 优先围绕 OpenAI-style Chat Completions 建设
-- 对 Anthropic 模式保留清晰的扩展接口
-- 允许一个本地端口绑定一组文本/多模态上游
-- 保留测试日志、请求抓取、调试可观测性
+- 把 Codex `Responses API` 转成上游常见的 chat 风格协议
+- 默认用法尽量简单
+- 同一个端口可以同时挂文本上游和多模态上游
+- 保留可选抓包能力，便于排查问题
 
 ## 运行模式
 
 ### 单服务模式
 
-- 通过环境变量启动一个本地端口
-- 适合本机调试、单模型验证、快速接入
+- 改 `.env`
+- 执行 `./scripts/start.sh`
 
 ### 多服务模式
 
-- 通过 YAML 配置一次性启动多个本地监听端口
-- 每个端口可绑定不同的文本上游和多模态上游
-- 支持 `defaults` 合并公共参数
-- 支持 `upstreams` 复用上游定义
+- 改 `configs/services.example.yaml`
+- 执行 `./scripts/start-config.sh`
 
 ## 核心模块
 
-### `config.py`
+- `config.py`: 负责加载 `.env` 风格配置和扁平 YAML 配置
+- `provider_profiles.py`: 负责移除部分厂商不接受的字段
+- `provider_adapters.py`: 负责厂商特定兼容改写
+- `app.py`: 提供 `/health`、`/v1/models`、`/v1/responses`
+- `translators/responses_openai.py`: 负责请求和响应转换
+- `upstreams/openai.py`: 负责上游 HTTP 转发
+- `request_capture.py`: 负责可选抓包
 
-- 解析环境变量模式
-- 解析 YAML 配置文件模式
-- 生成统一服务配置对象
-- 维护客户端模型别名到上游模型名的映射配置
-- 支持通过 `CRB_MODEL_ALIASES` 或 `CRB_MODEL_ALIASES_JSON` 覆盖环境变量模式默认映射
-- 内置映射按 provider 区分，避免所有服务共享一个默认目标模型
-- 支持未知模型策略，默认回落到服务默认上游模型
+## Codex 工具历史保护
 
-### `provider_profiles.py`
+长时间任务中，Codex 桌面版会把历史工具调用和工具输出重新提交给 `/v1/responses`。这些历史对原生 Codex 模型通常可接受，但部分 OpenAI Chat 兼容上游会因为上下文过大或历史参数格式不完整而拒绝请求。
 
-- 定义不同 provider 的字段能力画像
-- 在发送上游前裁剪不兼容字段
-- 暂时聚焦 `tools`、`tool_choice`、`stream_options`、`penalty` 等通用差异
+bridge 在 `provider_adapters.py` 中做统一保护：
 
-### `provider_adapters.py`
+- `tool` 消息中的内联 base64 图片会被替换成摘要，例如截图工具返回的 `data:image/png;base64,...`。
+- 历史 `tool_calls.function.arguments` 如果不是合法 JSON，会被包装成合法 JSON，并保留错误信息和原始片段预览。
+- 请求未指定 `max_tokens` 或 `max_completion_tokens` 时，默认补 `max_tokens=4096`。
+- Qwen 在长工具循环后仍会保留 tools 能力，只压缩历史工具消息，避免模型陷入重复失败。
 
-- 负责 provider 特定的请求改写规则
-- 用于承接“不是通用能力开关，而是厂商真实行为差异”的兼容逻辑
-- 当前已包含千问兼容模式的 `tool_choice=required -> auto` 降级
-
-### `app.py`
-
-- 创建 FastAPI 应用
-- 暴露 `/health`、`/v1/models`、`/v1/responses`
-
-### `translators/responses_openai.py`
-
-- 负责 `Responses -> Chat Completions` 请求映射
-- 负责 `Chat Completions -> Responses` 结果映射
-- 负责 `Chat Completions SSE -> Responses SSE` 流式事件映射
-- 在请求进入上游前完成客户端模型名标准化
-
-## 模型暴露策略
-
-- `/v1/models` 同时暴露真实 canonical 模型和客户端别名模型
-- alias 条目在 `metadata.canonical_model` 中指向真实上游模型
-- 这样 Codex 客户端和内部实际模型配置可以解耦
-- alias 匹配对客户端名称大小写不敏感
-
-## 未知模型策略
-
-- 默认策略：`default_upstream`
-- 当客户端提交一个未命中 alias、也不是当前上游 canonical 模型的名字时
-- bridge 默认不会原样透传，而是回落到当前服务绑定的默认上游模型
-- 这样可以避免客户端随手传一个陌生模型名时出现不可预期的路由失败
-
-### `upstreams/openai.py`
-
-- 面向 OpenAI-style 上游的 HTTP 访问封装
-- 负责头部认证、URL 拼接、流式转发
-
-### `request_capture.py`
-
-- 记录原始请求、转换后请求、上游响应摘要
-- 用于调试、回归测试和协议对比
-
-## 国际化
-
-- 默认文档语言：中文
-- 英文文档：同步维护核心设计与启动说明
-- 模型映射依据单独整理在 `docs/model-mapping.zh-CN.md`
+这些保护在本地 GLM 和智谱公网 `glm-code` 链路上都已验证，目标是让 Codex 的工具循环继续执行，而不是关闭工具调用。

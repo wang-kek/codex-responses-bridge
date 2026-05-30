@@ -13,7 +13,7 @@ def build_chat_completions_url(config: UpstreamConfig) -> str:
 
 
 def build_headers(config: UpstreamConfig) -> dict[str, str]:
-    api_key = os.environ.get(config.api_key_env, "").strip()
+    api_key = config.api_key.strip() if config.api_key else os.environ.get(config.api_key_env, "").strip()
     headers = {"Content-Type": "application/json"}
     if api_key:
         headers["Authorization"] = f"Bearer {api_key}"

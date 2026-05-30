@@ -6,7 +6,7 @@ import uuid
 from typing import Any, AsyncIterator, Dict, List, Optional
 
 
-TEXT_PART_TYPES = {"text", "input_text", "output_text"}
+TEXT_PART_TYPES = {"text", "input_text", "output_text", "reasoning_text"}
 IMAGE_PART_TYPES = {"input_image", "image_url"}
 
 
@@ -74,6 +74,13 @@ def extract_text_from_content(content: Any) -> str:
         if isinstance(part, dict) and part.get("type") in TEXT_PART_TYPES:
             parts.append(part.get("text", ""))
     return "\n".join(item for item in parts if item)
+
+
+def extract_reasoning_text(item: Dict[str, Any]) -> str:
+    content_text = extract_text_from_content(item.get("content"))
+    if content_text:
+        return content_text
+    return extract_text_from_content(item.get("summary"))
 
 
 def normalize_image_url(value: Any) -> Optional[Dict[str, Any]]:
@@ -208,9 +215,36 @@ def normalize_response_format(response_format: Any) -> Optional[Dict[str, Any]]:
     return None
 
 
+def append_tool_call_to_messages(
+    messages: List[Dict[str, Any]],
+    tool_call: Dict[str, Any],
+    reasoning_content: str,
+) -> str:
+    if messages and messages[-1].get("role") == "assistant":
+        assistant_message = messages[-1]
+        assistant_message.setdefault("content", "")
+        assistant_message.setdefault("tool_calls", []).append(tool_call)
+        if reasoning_content and not assistant_message.get("reasoning_content"):
+            assistant_message["reasoning_content"] = reasoning_content
+            return ""
+        return reasoning_content
+
+    message = {
+        "role": "assistant",
+        "content": "",
+        "tool_calls": [tool_call],
+    }
+    if reasoning_content:
+        message["reasoning_content"] = reasoning_content
+        reasoning_content = ""
+    messages.append(message)
+    return reasoning_content
+
+
 def convert_responses_to_openai_chat(body: Dict[str, Any], model: str) -> Dict[str, Any]:
     messages: List[Dict[str, Any]] = []
     known_tool_calls: Dict[str, Dict[str, Any]] = {}
+    pending_reasoning_content = ""
 
     instructions = body.get("instructions")
     if instructions:
@@ -234,29 +268,30 @@ def convert_responses_to_openai_chat(body: Dict[str, Any], model: str) -> Dict[s
                     role = "system"
                 if role not in {"system", "user", "assistant", "tool"}:
                     role = "user"
-                messages.append(
-                    {
-                        "role": role,
-                        "content": convert_response_content_to_chat_content(item.get("content", "")),
-                    }
-                )
+                message = {
+                    "role": role,
+                    "content": convert_response_content_to_chat_content(item.get("content", "")),
+                }
+                if role == "assistant" and pending_reasoning_content:
+                    message["reasoning_content"] = pending_reasoning_content
+                    pending_reasoning_content = ""
+                messages.append(message)
+            elif item_type == "reasoning":
+                pending_reasoning_content = extract_reasoning_text(item)
             elif item_type == "function_call":
                 call_id = item.get("call_id") or f"call_{uuid.uuid4().hex[:12]}"
                 name = item.get("name") or ""
                 arguments = item.get("arguments") or ""
                 known_tool_calls[call_id] = {"name": name, "arguments": arguments}
-                messages.append(
-                    {
-                        "role": "assistant",
-                        "content": "",
-                        "tool_calls": [
-                            {
-                                "id": call_id,
-                                "type": "function",
-                                "function": {"name": name, "arguments": arguments},
-                            }
-                        ],
-                    }
+                tool_call = {
+                    "id": call_id,
+                    "type": "function",
+                    "function": {"name": name, "arguments": arguments},
+                }
+                pending_reasoning_content = append_tool_call_to_messages(
+                    messages,
+                    tool_call,
+                    pending_reasoning_content,
                 )
             elif item_type == "function_call_output":
                 call_id = item.get("call_id", "")

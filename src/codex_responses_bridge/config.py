@@ -28,7 +28,7 @@ DEFAULT_MODEL_ALIASES: Dict[str, str] = {}
 PROVIDER_DEFAULT_MODEL_ALIASES = {
     "deepseek": {
         "GPT-5.5": "deepseek-v4-pro",
-        "GPT-5.4": "deepseek-v4-flash",
+        "GPT-5.4": "deepseek-v4-pro",
         "GPT-5.4-mini": "deepseek-v4-flash",
         "GPT-4.1": "deepseek-v4-flash",
         "GPT-4.1-mini": "deepseek-v4-flash",
@@ -44,7 +44,7 @@ PROVIDER_DEFAULT_MODEL_ALIASES = {
     },
     "qwen37-token": {
         "GPT-5.5": "qwen3.7-max",
-        "GPT-5.4": "qwen3.6-plus",
+        "GPT-5.4": "qwen3.7-max",
         "GPT-5.4-mini": "qwen3.6-flash",
         "GPT-4.1": "qwen3.6-plus",
         "GPT-4.1-mini": "qwen3.6-flash",
@@ -72,20 +72,44 @@ def _build_upstream_config(raw: Dict[str, Any], fallback_provider: str = "custom
     base_url = (raw.get("base_url") or DEFAULT_PRESET_BASE_URLS.get(provider) or "").rstrip("/")
     model = (raw.get("model") or "").strip()
     api_key_env = (raw.get("api_key_env") or "OPENAI_API_KEY").strip()
+    api_key = (raw.get("api_key") or "").strip()
     protocol_mode = (raw.get("protocol_mode") or "openai-chat").strip()
     timeout_seconds = int(raw.get("timeout_seconds") or 180)
     if not base_url:
         raise ValueError(f"missing base_url for upstream provider={provider}")
     if not model:
         raise ValueError(f"missing model for upstream provider={provider}")
+    if not api_key_env and not api_key:
+        raise ValueError(f"missing api_key_env or api_key for upstream provider={provider}")
     return UpstreamConfig(
         provider=provider,
         base_url=base_url,
         model=model,
         api_key_env=api_key_env,
+        api_key=api_key,
         protocol_mode=protocol_mode,
         timeout_seconds=timeout_seconds,
         extra_body=raw.get("extra_body") if isinstance(raw.get("extra_body"), dict) else {},
+    )
+
+
+def _build_flat_upstream_config(item: Dict[str, Any], prefix: str = "") -> Optional[UpstreamConfig]:
+    provider_key = "{0}provider".format(prefix)
+    provider = str(item.get(provider_key, "") or "").strip()
+    if not provider:
+        return None
+    return _build_upstream_config(
+        {
+            "provider": provider,
+            "base_url": item.get("{0}base_url".format(prefix)) or DEFAULT_PRESET_BASE_URLS.get(provider, ""),
+            "model": item.get("{0}model".format(prefix)) or DEFAULT_PRESET_MODELS.get(provider, ""),
+            "api_key_env": item.get("{0}api_key_env".format(prefix)) or "OPENAI_API_KEY",
+            "api_key": item.get("{0}api_key".format(prefix)) or "",
+            "protocol_mode": item.get("{0}protocol_mode".format(prefix)) or "openai-chat",
+            "timeout_seconds": item.get("{0}timeout_seconds".format(prefix)) or 180,
+            "extra_body": item.get("{0}extra_body".format(prefix)) or {},
+        },
+        fallback_provider=provider,
     )
 
 
@@ -181,6 +205,7 @@ def load_single_service_from_env() -> ServiceConfig:
             "base_url": base_url,
             "model": os.environ.get("CRB_UPSTREAM_MODEL", DEFAULT_PRESET_MODELS.get(provider, "")),
             "api_key_env": os.environ.get("CRB_UPSTREAM_API_KEY_ENV", "CRB_UPSTREAM_API_KEY"),
+            "api_key": os.environ.get("CRB_UPSTREAM_API_KEY", ""),
             "protocol_mode": os.environ.get("CRB_UPSTREAM_PROTOCOL_MODE", "openai-chat"),
             "timeout_seconds": os.environ.get("CRB_UPSTREAM_TIMEOUT", "180"),
         },
@@ -196,6 +221,7 @@ def load_single_service_from_env() -> ServiceConfig:
                 "base_url": os.environ.get("CRB_MM_UPSTREAM_BASE_URL", DEFAULT_PRESET_BASE_URLS.get(multimodal_provider, "")),
                 "model": os.environ.get("CRB_MM_UPSTREAM_MODEL", ""),
                 "api_key_env": os.environ.get("CRB_MM_UPSTREAM_API_KEY_ENV", "CRB_MM_UPSTREAM_API_KEY"),
+                "api_key": os.environ.get("CRB_MM_UPSTREAM_API_KEY", ""),
                 "protocol_mode": os.environ.get("CRB_MM_UPSTREAM_PROTOCOL_MODE", "openai-chat"),
                 "timeout_seconds": os.environ.get("CRB_MM_UPSTREAM_TIMEOUT", "180"),
             },
@@ -204,7 +230,7 @@ def load_single_service_from_env() -> ServiceConfig:
 
     return ServiceConfig(
         name=os.environ.get("CRB_SERVICE_NAME", "default-service").strip(),
-        host=os.environ.get("CRB_HOST", "127.0.0.1").strip(),
+        host=os.environ.get("CRB_HOST", "0.0.0.0").strip(),
         port=int(os.environ.get("CRB_PORT", "8090")),
         protocol_mode=os.environ.get("CRB_PROTOCOL_MODE", "openai-chat").strip(),
         text_upstream=text_upstream,
@@ -223,24 +249,35 @@ def load_services_from_yaml(path: Union[str, os.PathLike]) -> List[ServiceConfig
     defaults = data.get("defaults") or {}
     language = data.get("language", defaults.get("language", "zh-CN"))
     capture = data.get("request_capture") or defaults.get("request_capture") or {}
+    if not capture:
+        capture = {
+            "enabled": bool(data.get("capture_enabled", defaults.get("capture_enabled", False))),
+            "directory": str(data.get("capture_directory", defaults.get("capture_directory", "./captures"))),
+        }
     upstream_templates = data.get("upstreams") or {}
-    default_host = defaults.get("host", "127.0.0.1")
+    default_host = data.get("host", defaults.get("host", "0.0.0.0"))
     default_protocol_mode = defaults.get("protocol_mode", "openai-chat")
     default_unknown_model_strategy = defaults.get("unknown_model_strategy", "default_upstream")
     services = []
     for item in data.get("services") or []:
-        text_upstream = _resolve_upstream_from_entry(
-            item=item,
-            key="text_upstream",
-            upstream_templates=upstream_templates,
-        )
+        text_upstream = _build_flat_upstream_config(item)
         if text_upstream is None:
-            raise ValueError(f"service {item.get('name', 'service')} missing text_upstream or text_upstream_ref")
-        multimodal_upstream = _resolve_upstream_from_entry(
-            item=item,
-            key="multimodal_upstream",
-            upstream_templates=upstream_templates,
-        )
+            text_upstream = _resolve_upstream_from_entry(
+                item=item,
+                key="text_upstream",
+                upstream_templates=upstream_templates,
+            )
+        if text_upstream is None:
+            raise ValueError(
+                f"service {item.get('name', 'service')} missing provider/base_url/model or text_upstream"
+            )
+        multimodal_upstream = _build_flat_upstream_config(item, prefix="multimodal_")
+        if multimodal_upstream is None:
+            multimodal_upstream = _resolve_upstream_from_entry(
+                item=item,
+                key="multimodal_upstream",
+                upstream_templates=upstream_templates,
+            )
         services.append(
             ServiceConfig(
                 name=item.get("name", "service"),

@@ -61,6 +61,25 @@ def test_convert_responses_to_openai_chat_with_tool_history():
     assert "ok" in payload["messages"][2]["content"]
 
 
+def test_convert_responses_to_openai_chat_preserves_reasoning_for_tool_history():
+    payload = convert_responses_to_openai_chat(
+        {
+            "input": [
+                {"type": "message", "role": "user", "content": "hi"},
+                {
+                    "type": "reasoning",
+                    "content": [{"type": "reasoning_text", "text": "需要先查一下"}],
+                },
+                {"type": "function_call", "call_id": "call_1", "name": "lookup", "arguments": '{"q":"x"}'},
+                {"type": "function_call_output", "call_id": "call_1", "output": "ok"},
+            ]
+        },
+        "deepseek-v4-pro",
+    )
+    assert payload["messages"][1]["reasoning_content"] == "需要先查一下"
+    assert payload["messages"][1]["tool_calls"][0]["function"]["name"] == "lookup"
+
+
 def test_convert_chat_to_responses_payload():
     payload = convert_chat_to_responses_payload(
         {

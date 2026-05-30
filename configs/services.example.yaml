@@ -1,64 +1,85 @@
-defaults:
-  host: 127.0.0.1
-  protocol_mode: openai-chat
-  language: zh-CN
-  unknown_model_strategy: default_upstream
-  request_capture:
-    enabled: true
-    directory: ./captures
+language: zh-CN
+host: 0.0.0.0
+capture_enabled: false
+capture_directory: ./captures
 
-upstreams:
-  deepseek_text:
-    provider: deepseek
-    base_url: https://api.deepseek.com/v1
-    api_key_env: DEEPSEEK_API_KEY
-    model: deepseek-v4-pro
+services:
+  - name: glm-local-main
+    port: 8091
+    provider: glm-code
+    base_url: http://192.168.1.232:8000/v1
+    api_key_env: LOCAL_GLM_API_KEY
+    # 也可以直接写 api_key，不想单独放环境变量时更方便
+    # api_key: your-key
+    model: glm-5.1-fp8
+    multimodal_provider: local-vlm
+    multimodal_base_url: http://192.168.1.251:33338/v1
+    multimodal_api_key_env: LOCAL_VLM_API_KEY
+    multimodal_model: Qwen/Qwen3-VL-8B-Instruct
+    model_aliases:
+      GPT-5.5: glm-5.1-fp8
+      GPT-5.4: glm-5.1-fp8
+      GPT-5.4-mini: glm-5.1-fp8
+      GPT-4.1: glm-5.1-fp8
+      GPT-4.1-mini: glm-5.1-fp8
+      o4-mini: glm-5.1-fp8
 
-  local_vlm:
-    provider: local-vlm
-    base_url: http://127.0.0.1:33338/v1
-    api_key_env: LOCAL_VLM_API_KEY
-    model: Qwen/Qwen3-VL-8B-Instruct
-
-  glm_coder:
+  - name: glm-public-coder
+    port: 8092
     provider: glm-code
     base_url: https://open.bigmodel.cn/api/coding/paas/v4
     api_key_env: ZHIPU_API_KEY
+    # api_key: your-key
     model: glm-5.1
+    model_aliases:
+      GPT-5.5: glm-5.1
+      GPT-5.4: glm-5.1
+      GPT-5.4-mini: glm-5-turbo
+      GPT-4.1: glm-5-turbo
+      GPT-4.1-mini: glm-4.6
+      o4-mini: glm-5-turbo
 
-  glm_vlm:
-    provider: glm-vlm
-    base_url: https://open.bigmodel.cn/api/paas/v4
-    api_key_env: ZHIPU_API_KEY
-    model: glm-4v-plus
+  - name: deepseek-public
+    port: 8093
+    provider: deepseek
+    base_url: https://api.deepseek.com/v1
+    api_key_env: DEEPSEEK_API_KEY
+    # api_key: your-key
+    model: deepseek-v4-pro
+    model_aliases:
+      GPT-5.5: deepseek-v4-pro
+      GPT-5.4: deepseek-v4-pro
+      GPT-5.4-mini: deepseek-v4-flash
+      GPT-4.1: deepseek-v4-flash
+      GPT-4.1-mini: deepseek-v4-flash
+      o4-mini: deepseek-v4-flash
 
-  qwen_text:
+  - name: qwen-public
+    port: 8094
     provider: qwen37-token
     base_url: https://dashscope.aliyuncs.com/compatible-mode/v1
     api_key_env: DASHSCOPE_API_KEY
+    # api_key: your-key
     model: qwen3.7-max
+    model_aliases:
+      GPT-5.5: qwen3.7-max
+      GPT-5.4: qwen3.7-max
+      GPT-5.4-mini: qwen3.6-flash
+      GPT-4.1: qwen3.6-plus
+      GPT-4.1-mini: qwen3.6-flash
+      o4-mini: qwen3.6-flash
 
-  mimo_text:
+  - name: mimo-public
+    port: 8095
     provider: mimo
     base_url: https://api.xiaomimimo.com/v1
     api_key_env: MIMO_API_KEY
+    # api_key: your-key
     model: mimo-v2.5-pro
-
-services:
-  - name: deepseek-main
-    port: 8090
-    text_upstream_ref: deepseek_text
-    multimodal_upstream_ref: local_vlm
-
-  - name: glm-code-main
-    port: 8091
-    text_upstream_ref: glm_coder
-    multimodal_upstream_ref: glm_vlm
-
-  - name: qwen37-main
-    port: 8092
-    text_upstream_ref: qwen_text
-
-  - name: mimo-main
-    port: 8093
-    text_upstream_ref: mimo_text
+    model_aliases:
+      GPT-5.5: mimo-v2.5-pro
+      GPT-5.4: mimo-v2.5-pro
+      GPT-5.4-mini: mimo-v2-flash
+      GPT-4.1: mimo-v2-pro
+      GPT-4.1-mini: mimo-v2-flash
+      o4-mini: mimo-v2-flash

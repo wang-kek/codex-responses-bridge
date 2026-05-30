@@ -58,3 +58,44 @@ def test_sanitize_openai_chat_payload_for_multimodal_local_vlm():
     assert "frequency_penalty" not in sanitized
     assert "stream_options" in sanitized
     assert "tools" in removed
+
+
+def test_sanitize_openai_chat_payload_strips_message_reasoning_for_non_deepseek():
+    service = build_service()
+    payload = {
+        "model": "glm-5.1",
+        "messages": [{"role": "assistant", "content": "", "reasoning_content": "想一想"}],
+    }
+    sanitized, removed = sanitize_openai_chat_payload(
+        upstream=service.text_upstream,
+        payload=payload,
+        is_multimodal=False,
+    )
+    assert "reasoning_content" not in sanitized["messages"][0]
+    assert "messages.reasoning_content" in removed
+
+
+def test_sanitize_openai_chat_payload_keeps_message_reasoning_for_deepseek():
+    service = ServiceConfig(
+        name="svc",
+        host="127.0.0.1",
+        port=8090,
+        protocol_mode="openai-chat",
+        text_upstream=UpstreamConfig(
+            provider="deepseek",
+            base_url="https://api.deepseek.com/v1",
+            model="deepseek-v4-pro",
+            api_key_env="DEEPSEEK_API_KEY",
+        ),
+    )
+    payload = {
+        "model": "deepseek-v4-pro",
+        "messages": [{"role": "assistant", "content": "", "reasoning_content": "想一想"}],
+    }
+    sanitized, removed = sanitize_openai_chat_payload(
+        upstream=service.text_upstream,
+        payload=payload,
+        is_multimodal=False,
+    )
+    assert sanitized["messages"][0]["reasoning_content"] == "想一想"
+    assert "messages.reasoning_content" not in removed

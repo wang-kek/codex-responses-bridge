@@ -10,6 +10,7 @@ class UpstreamConfig:
     base_url: str
     model: str
     api_key_env: str
+    api_key: str = ""
     protocol_mode: str = "openai-chat"
     timeout_seconds: int = 180
     extra_body: dict[str, Any] = field(default_factory=dict)
