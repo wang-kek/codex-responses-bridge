@@ -1,0 +1,64 @@
+defaults:
+  host: 127.0.0.1
+  protocol_mode: openai-chat
+  language: zh-CN
+  unknown_model_strategy: default_upstream
+  request_capture:
+    enabled: true
+    directory: ./captures
+
+upstreams:
+  deepseek_text:
+    provider: deepseek
+    base_url: https://api.deepseek.com/v1
+    api_key_env: DEEPSEEK_API_KEY
+    model: deepseek-v4-pro
+
+  local_vlm:
+    provider: local-vlm
+    base_url: http://127.0.0.1:33338/v1
+    api_key_env: LOCAL_VLM_API_KEY
+    model: Qwen/Qwen3-VL-8B-Instruct
+
+  glm_coder:
+    provider: glm-code
+    base_url: https://open.bigmodel.cn/api/coding/paas/v4
+    api_key_env: ZHIPU_API_KEY
+    model: glm-5.1
+
+  glm_vlm:
+    provider: glm-vlm
+    base_url: https://open.bigmodel.cn/api/paas/v4
+    api_key_env: ZHIPU_API_KEY
+    model: glm-4v-plus
+
+  qwen_text:
+    provider: qwen37-token
+    base_url: https://dashscope.aliyuncs.com/compatible-mode/v1
+    api_key_env: DASHSCOPE_API_KEY
+    model: qwen3.7-max
+
+  mimo_text:
+    provider: mimo
+    base_url: https://api.xiaomimimo.com/v1
+    api_key_env: MIMO_API_KEY
+    model: mimo-v2.5-pro
+
+services:
+  - name: deepseek-main
+    port: 8090
+    text_upstream_ref: deepseek_text
+    multimodal_upstream_ref: local_vlm
+
+  - name: glm-code-main
+    port: 8091
+    text_upstream_ref: glm_coder
+    multimodal_upstream_ref: glm_vlm
+
+  - name: qwen37-main
+    port: 8092
+    text_upstream_ref: qwen_text
+
+  - name: mimo-main
+    port: 8093
+    text_upstream_ref: mimo_text

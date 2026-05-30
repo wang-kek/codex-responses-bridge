@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "codex-responses-bridge"
+version = "0.1.0"
+description = "面向 Codex Responses API 的轻量多上游协议桥"
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "MIT" }
+authors = [
+  { name = "wangkq" }
+]
+classifiers = [
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+  "fastapi>=0.115",
+  "httpx>=0.27",
+  "pyyaml>=6.0",
+  "uvicorn>=0.30",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0",
+]
+
+[project.scripts]
+codex-responses-bridge = "codex_responses_bridge.__main__:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
