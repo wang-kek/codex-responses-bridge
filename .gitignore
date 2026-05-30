@@ -17,4 +17,5 @@ captures/
 *.log
 .env
 .env.*
+configs/model-keys.env
 manual_testbed/

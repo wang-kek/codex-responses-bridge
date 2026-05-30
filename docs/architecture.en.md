@@ -11,17 +11,18 @@
 
 ### Single-service mode
 
-- edit `.env`
-- run `./scripts/start.sh`
+- pass the key inline on the command line
+- run `./scripts/start-zhipu.sh` / `./scripts/start-deepseek.sh` / `./scripts/start-qwen.sh` / `./scripts/start-mimo.sh`
 
 ### Multi-service mode
 
+- put keys in `configs/model-keys.env`
 - edit `configs/services.example.yaml`
-- run `./scripts/start-config.sh`
+- run `./scripts/start-all.sh`
 
 ## Main modules
 
-- `config.py`: loads `.env`-style runtime settings and flat YAML service configs
+- `config.py`: loads environment variables and flat YAML service configs
 - `provider_profiles.py`: removes fields that some providers do not accept
 - `provider_adapters.py`: applies provider-specific compatibility rewrites
 - `app.py`: FastAPI routes for `/health`, `/v1/models`, `/v1/responses`

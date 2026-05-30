@@ -1,58 +1,83 @@
 # codex-responses-bridge
 
-A simple bridge from Codex `/v1/responses` to upstream `/v1/chat/completions`.
+Translate Codex `/v1/responses` into upstream `/v1/chat/completions`.
 
-## Quick start
+The goal is simple: copy, fill keys, run.
 
-### 1. Bootstrap
+## Single-model startup
+
+The easiest way is a one-line command.
 
 ```bash
-./scripts/bootstrap.sh
+ZHIPU_API_KEY=your-key ./scripts/start-zhipu.sh
 ```
 
-### 2. Edit `.env`
-
-Copy [.env.example](.env.example) to `.env`, then update:
-
-- `PORT`
-- `PROVIDER`
-- `BASE_URL`
-- `API_KEY`
-- `MODEL`
-
-### 3. Start
+Other providers work the same way:
 
 ```bash
-./scripts/start.sh
+DEEPSEEK_API_KEY=your-key ./scripts/start-deepseek.sh
+DASHSCOPE_API_KEY=your-key ./scripts/start-qwen.sh
+MIMO_API_KEY=your-key ./scripts/start-mimo.sh
+```
+
+You can also override the port inline:
+
+```bash
+ZHIPU_API_KEY=your-key PORT=8092 ./scripts/start-zhipu.sh
 ```
 
 Default host is `0.0.0.0`.
 
-## Multi-port mode
+## Multi-model startup
 
-Edit:
+Put all keys in one visible file:
 
-[configs/services.example.yaml](configs/services.example.yaml)
+[configs/model-keys.env.example](configs/model-keys.env.example)
 
-This example mirrors the validated default test environment.
+Copy it to `configs/model-keys.env` and fill:
 
-Each service entry can use either `api_key_env` or direct `api_key`.
+- `ZHIPU_API_KEY`
+- `DEEPSEEK_API_KEY`
+- `DASHSCOPE_API_KEY`
+- `MIMO_API_KEY`
 
 Then run:
 
 ```bash
-./scripts/start-config.sh
+./scripts/start-all.sh
 ```
 
-## Codex Tool History Guards
+Multi-port service definitions live in:
 
-Codex Desktop may send previous tool-call history back to the model during long tasks. Before forwarding a request upstream, the bridge applies a few safe guards:
+[configs/services.example.yaml](configs/services.example.yaml)
 
-- Inline `data:image/...;base64,...` images inside tool outputs are replaced with short summaries so screenshots do not overflow text-model context windows.
-- Invalid historical `tool_calls.function.arguments` strings are wrapped into valid JSON so upstream services do not reject the whole request with `Unterminated string`.
-- If the client does not send an output limit, the bridge adds `max_tokens=4096` by default.
+Default port map:
 
-These guards do not disable tool calls and do not alter real multimodal user input. They only clean up tool-history payloads that common OpenAI-compatible upstreams may reject.
+- `8092` -> Zhipu public
+- `8093` -> DeepSeek
+- `8094` -> Qwen
+- `8095` -> MiMo
+
+## Supported
+
+- Python `3.8+`
+- One-line single-model startup
+- Multi-model startup from one visible config file
+- text and multimodal routing
+- GPT-style model name mapping
+- fallback to the service default model for unknown names
+- Codex tool-history guards
+- optional request capture
+
+## Codex tool-history guards
+
+During long tasks, Codex Desktop may send previous tool history back to the model. Before forwarding upstream, the bridge applies a few safe guards:
+
+- Inline `data:image/...;base64,...` tool outputs are replaced with short summaries.
+- Historical `tool_calls.function.arguments` values that are not valid JSON are wrapped into valid JSON.
+- If the client does not send an output limit, the bridge adds `max_tokens=4096`.
+
+These guards do not disable tool calls or alter real multimodal user input.
 
 ## Model mapping
 
@@ -60,11 +85,29 @@ See:
 
 [docs/model-mapping.zh-CN.md](docs/model-mapping.zh-CN.md)
 
-Rules:
+## Repository layout
 
-- use official migration mapping if a vendor provides one
-- otherwise use same-tier recommended defaults
-- unknown client names fall back to the service default `model`
+```text
+.
+├── LICENSE
+├── README.md
+├── README.en.md
+├── configs/
+│   ├── model-keys.env.example
+│   └── services.example.yaml
+├── docs/
+│   ├── architecture.en.md
+│   ├── architecture.zh-CN.md
+│   └── model-mapping.zh-CN.md
+├── scripts/
+│   ├── start-all.sh
+│   ├── start-deepseek.sh
+│   ├── start-mimo.sh
+│   ├── start-qwen.sh
+│   ├── start.sh
+│   └── start-zhipu.sh
+└── src/
+```
 
 ## License
 

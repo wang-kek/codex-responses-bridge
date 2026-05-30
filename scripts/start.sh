@@ -4,19 +4,14 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 VENV_DIR="${VENV_DIR:-$ROOT_DIR/.venv}"
 APP_BIN="$VENV_DIR/bin/codex-responses-bridge"
-ENV_FILE="${ENV_FILE:-$ROOT_DIR/.env}"
+PYTHON_BIN="${PYTHON_BIN:-python3}"
 
 if [[ ! -x "$APP_BIN" ]]; then
-  echo "Missing executable: $APP_BIN" >&2
-  echo "Run scripts/bootstrap.sh first." >&2
-  exit 1
-fi
-
-if [[ -f "$ENV_FILE" ]]; then
-  set -a
-  # shellcheck disable=SC1090
-  source "$ENV_FILE"
-  set +a
+  if [[ ! -d "$VENV_DIR" ]]; then
+    "$PYTHON_BIN" -m venv "$VENV_DIR"
+  fi
+  "$VENV_DIR/bin/python" -m pip install --upgrade pip
+  "$VENV_DIR/bin/pip" install -e "$ROOT_DIR"
 fi
 
 if [[ -n "${PORT:-}" ]]; then export CRB_PORT="$PORT"; fi
@@ -33,5 +28,11 @@ if [[ -n "${MM_API_KEY:-}" ]]; then export CRB_MM_UPSTREAM_API_KEY="$MM_API_KEY"
 if [[ -n "${MODEL_ALIASES_JSON:-}" ]]; then export CRB_MODEL_ALIASES_JSON="$MODEL_ALIASES_JSON"; fi
 if [[ -n "${CAPTURE_ENABLED:-}" ]]; then export CRB_CAPTURE_ENABLED="$CAPTURE_ENABLED"; fi
 if [[ -n "${CAPTURE_DIR:-}" ]]; then export CRB_CAPTURE_DIR="$CAPTURE_DIR"; fi
+
+if [[ -z "${CRB_UPSTREAM_API_KEY:-}" && -z "${API_KEY:-}" ]]; then
+  echo "Missing API key. Start with API_KEY=xxx, for example:" >&2
+  echo "  API_KEY=your-key PROVIDER=glm-code MODEL=glm-5.1 ./scripts/start.sh" >&2
+  exit 1
+fi
 
 exec "$APP_BIN"

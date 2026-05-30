@@ -10,7 +10,7 @@ from .config import load_runtime_services
 from .logging_utils import configure_logging
 
 
-logger = logging.getLogger("codex_responses_bridge.bootstrap")
+logger = logging.getLogger("codex_responses_bridge.runtime")
 
 
 async def run_service(service) -> None:

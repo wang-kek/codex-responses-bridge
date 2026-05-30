@@ -11,17 +11,18 @@
 
 ### 单服务模式
 
-- 改 `.env`
-- 执行 `./scripts/start.sh`
+- 一行命令传 key
+- 执行 `./scripts/start-zhipu.sh` / `./scripts/start-deepseek.sh` / `./scripts/start-qwen.sh` / `./scripts/start-mimo.sh`
 
 ### 多服务模式
 
+- 把 key 写入 `configs/model-keys.env`
 - 改 `configs/services.example.yaml`
-- 执行 `./scripts/start-config.sh`
+- 执行 `./scripts/start-all.sh`
 
 ## 核心模块
 
-- `config.py`: 负责加载 `.env` 风格配置和扁平 YAML 配置
+- `config.py`: 负责加载环境变量和扁平 YAML 配置
 - `provider_profiles.py`: 负责移除部分厂商不接受的字段
 - `provider_adapters.py`: 负责厂商特定兼容改写
 - `app.py`: 提供 `/health`、`/v1/models`、`/v1/responses`
