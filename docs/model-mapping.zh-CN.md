@@ -25,6 +25,19 @@
 - DeepSeek 官方模型接口：`GET /v1/models`
 - 当前工程默认按高档位与轻量档位做两档推荐
 
+### 本地 DeepSeek
+
+- `GPT-5.5 -> deepseek-v4-flash`
+- `GPT-5.4 -> deepseek-v4-flash`
+- `GPT-5.4-mini -> deepseek-v4-flash`
+- `GPT-4.1 -> deepseek-v4-flash`
+- `GPT-4.1-mini -> deepseek-v4-flash`
+- `o4-mini -> deepseek-v4-flash`
+
+依据：
+
+- 本地服务默认只提供轻量档位，方便快速联调
+
 ### 智谱 GLM Code
 
 - `GPT-5.5 -> glm-5.1`

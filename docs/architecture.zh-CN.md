@@ -37,7 +37,7 @@
 本地 DeepSeek 默认配置为：
 
 - 地址：`http://127.0.0.1:8000/v1`
-- 模型：`deepseek-v4-pro`
+- 模型：`deepseek-v4-flash`
 - 端口：`8096`
 - API key：不需要
 

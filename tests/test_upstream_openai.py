@@ -7,7 +7,7 @@ def test_is_loopback_upstream():
         UpstreamConfig(
             provider="deepseek",
             base_url="http://127.0.0.1:8000/v1",
-            model="deepseek-v4-pro",
+            model="deepseek-v4-flash",
             api_key_env="",
         )
     )

@@ -20,7 +20,7 @@ DASHSCOPE_API_KEY=你的key ./scripts/start-qwen.sh
 MIMO_API_KEY=你的key ./scripts/start-mimo.sh
 ```
 
-本地 DeepSeek 如果运行在 `http://127.0.0.1:8000`，不需要 key：
+本地 DeepSeek 如果运行在 `http://127.0.0.1:8000`，不需要 key，默认走 `deepseek-v4-flash`：
 
 ```bash
 ./scripts/start-deepseek-local.sh
@@ -63,7 +63,7 @@ ZHIPU_API_KEY=你的key PORT=8092 ./scripts/start-zhipu.sh
 - `8093` -> DeepSeek
 - `8094` -> 通义千问
 - `8095` -> 小米 MiMo
-- `8096` -> 本地 DeepSeek，无需 key
+- `8096` -> 本地 DeepSeek，`deepseek-v4-flash`，无需 key
 
 Codex 客户端里填写：
 

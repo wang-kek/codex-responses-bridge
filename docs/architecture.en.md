@@ -37,7 +37,7 @@ When an upstream URL points to `127.0.0.1`, `localhost`, or `::1`, the bridge by
 The default local DeepSeek route is:
 
 - URL: `http://127.0.0.1:8000/v1`
-- model: `deepseek-v4-pro`
+- model: `deepseek-v4-flash`
 - port: `8096`
 - API key: not required
 

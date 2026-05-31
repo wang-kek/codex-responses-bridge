@@ -28,7 +28,7 @@
 
 - 智谱公网 Coding PaaS：`glm-code`，默认模型 `glm-5.1`。
 - DeepSeek：默认模型 `deepseek-v4-pro`。
-- 本地 DeepSeek：默认地址 `http://127.0.0.1:8000/v1`，无需 key。
+- 本地 DeepSeek：默认地址 `http://127.0.0.1:8000/v1`，默认模型 `deepseek-v4-flash`，无需 key。
 - 通义千问 DashScope 兼容模式：默认模型 `qwen3.7-max`。
 - 小米 MiMo：默认模型 `mimo-v2.5-pro`。
 

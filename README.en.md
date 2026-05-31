@@ -20,7 +20,7 @@ DASHSCOPE_API_KEY=your-key ./scripts/start-qwen.sh
 MIMO_API_KEY=your-key ./scripts/start-mimo.sh
 ```
 
-If local DeepSeek is running at `http://127.0.0.1:8000`, no key is needed:
+If local DeepSeek is running at `http://127.0.0.1:8000`, no key is needed. It defaults to `deepseek-v4-flash`:
 
 ```bash
 ./scripts/start-deepseek-local.sh
@@ -63,7 +63,7 @@ Default port map:
 - `8093` -> DeepSeek
 - `8094` -> Qwen
 - `8095` -> MiMo
-- `8096` -> local DeepSeek, no key required
+- `8096` -> local DeepSeek, `deepseek-v4-flash`, no key required
 
 Use these Base URLs in Codex:
 
