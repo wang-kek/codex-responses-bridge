@@ -71,7 +71,8 @@ def _build_upstream_config(raw: Dict[str, Any], fallback_provider: str = "custom
     provider = (raw.get("provider") or fallback_provider).strip()
     base_url = (raw.get("base_url") or DEFAULT_PRESET_BASE_URLS.get(provider) or "").rstrip("/")
     model = (raw.get("model") or "").strip()
-    api_key_env = (raw.get("api_key_env") or "OPENAI_API_KEY").strip()
+    raw_api_key_env = raw.get("api_key_env")
+    api_key_env = "OPENAI_API_KEY" if raw_api_key_env is None else str(raw_api_key_env).strip()
     api_key = (raw.get("api_key") or "").strip()
     protocol_mode = (raw.get("protocol_mode") or "openai-chat").strip()
     timeout_seconds = int(raw.get("timeout_seconds") or 180)
@@ -79,8 +80,6 @@ def _build_upstream_config(raw: Dict[str, Any], fallback_provider: str = "custom
         raise ValueError(f"missing base_url for upstream provider={provider}")
     if not model:
         raise ValueError(f"missing model for upstream provider={provider}")
-    if not api_key_env and not api_key:
-        raise ValueError(f"missing api_key_env or api_key for upstream provider={provider}")
     return UpstreamConfig(
         provider=provider,
         base_url=base_url,
@@ -103,7 +102,7 @@ def _build_flat_upstream_config(item: Dict[str, Any], prefix: str = "") -> Optio
             "provider": provider,
             "base_url": item.get("{0}base_url".format(prefix)) or DEFAULT_PRESET_BASE_URLS.get(provider, ""),
             "model": item.get("{0}model".format(prefix)) or DEFAULT_PRESET_MODELS.get(provider, ""),
-            "api_key_env": item.get("{0}api_key_env".format(prefix)) or "OPENAI_API_KEY",
+            "api_key_env": item.get("{0}api_key_env".format(prefix)),
             "api_key": item.get("{0}api_key".format(prefix)) or "",
             "protocol_mode": item.get("{0}protocol_mode".format(prefix)) or "openai-chat",
             "timeout_seconds": item.get("{0}timeout_seconds".format(prefix)) or 180,

@@ -9,6 +9,7 @@
 - 提供单模型一行启动脚本：
   - `scripts/start-zhipu.sh`
   - `scripts/start-deepseek.sh`
+  - `scripts/start-deepseek-local.sh`
   - `scripts/start-qwen.sh`
   - `scripts/start-mimo.sh`
 - 提供多模型集中启动脚本：`scripts/start-all.sh`。
@@ -21,11 +22,13 @@
 - 支持流式响应转换回 Responses API SSE 事件。
 - 支持 `/health` 和 `/v1/models`。
 - 支持文本上游和可选多模态上游分流。
+- 本地 loopback 上游自动绕过系统代理环境变量，避免 `127.0.0.1` 服务被错误转发到 HTTP/HTTPS 代理。
 
 ### 厂商默认配置
 
 - 智谱公网 Coding PaaS：`glm-code`，默认模型 `glm-5.1`。
 - DeepSeek：默认模型 `deepseek-v4-pro`。
+- 本地 DeepSeek：默认地址 `http://127.0.0.1:8000/v1`，无需 key。
 - 通义千问 DashScope 兼容模式：默认模型 `qwen3.7-max`。
 - 小米 MiMo：默认模型 `mimo-v2.5-pro`。
 

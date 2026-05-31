@@ -54,6 +54,20 @@ services:
       GPT-4.1-mini: deepseek-v4-flash
       o4-mini: deepseek-v4-flash
 
+  - name: deepseek-local
+    port: 8096
+    provider: deepseek
+    base_url: http://127.0.0.1:8000/v1
+    api_key_env: ""
+    model: deepseek-v4-pro
+    model_aliases:
+      GPT-5.5: deepseek-v4-pro
+      GPT-5.4: deepseek-v4-pro
+      GPT-5.4-mini: deepseek-v4-flash
+      GPT-4.1: deepseek-v4-flash
+      GPT-4.1-mini: deepseek-v4-flash
+      o4-mini: deepseek-v4-flash
+
   - name: qwen-public
     port: 8094
     provider: qwen37-token

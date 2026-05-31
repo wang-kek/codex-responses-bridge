@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 from typing import Any
+from urllib.parse import urlparse
 
 import httpx
 
@@ -10,6 +11,11 @@ from ..models import UpstreamConfig
 
 def build_chat_completions_url(config: UpstreamConfig) -> str:
     return f"{config.base_url.rstrip('/')}/chat/completions"
+
+
+def is_loopback_upstream(config: UpstreamConfig) -> bool:
+    host = (urlparse(config.base_url).hostname or "").lower()
+    return host in {"127.0.0.1", "localhost", "::1"}
 
 
 def build_headers(config: UpstreamConfig) -> dict[str, str]:

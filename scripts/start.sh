@@ -29,7 +29,7 @@ if [[ -n "${MODEL_ALIASES_JSON:-}" ]]; then export CRB_MODEL_ALIASES_JSON="$MODE
 if [[ -n "${CAPTURE_ENABLED:-}" ]]; then export CRB_CAPTURE_ENABLED="$CAPTURE_ENABLED"; fi
 if [[ -n "${CAPTURE_DIR:-}" ]]; then export CRB_CAPTURE_DIR="$CAPTURE_DIR"; fi
 
-if [[ -z "${CRB_UPSTREAM_API_KEY:-}" && -z "${API_KEY:-}" ]]; then
+if [[ -z "${CRB_UPSTREAM_API_KEY:-}" && -z "${API_KEY:-}" && "${ALLOW_NO_API_KEY:-0}" != "1" ]]; then
   echo "Missing API key. Start with API_KEY=xxx, for example:" >&2
   echo "  API_KEY=your-key PROVIDER=glm-code MODEL=glm-5.1 ./scripts/start.sh" >&2
   exit 1

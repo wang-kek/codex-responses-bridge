@@ -20,6 +20,12 @@ DASHSCOPE_API_KEY=你的key ./scripts/start-qwen.sh
 MIMO_API_KEY=你的key ./scripts/start-mimo.sh
 ```
 
+本地 DeepSeek 如果运行在 `http://127.0.0.1:8000`，不需要 key：
+
+```bash
+./scripts/start-deepseek-local.sh
+```
+
 如果你想改端口，也可以直接叠加：
 
 ```bash
@@ -57,6 +63,7 @@ ZHIPU_API_KEY=你的key PORT=8092 ./scripts/start-zhipu.sh
 - `8093` -> DeepSeek
 - `8094` -> 通义千问
 - `8095` -> 小米 MiMo
+- `8096` -> 本地 DeepSeek，无需 key
 
 Codex 客户端里填写：
 
@@ -64,6 +71,7 @@ Codex 客户端里填写：
 - DeepSeek：`http://你的机器IP:8093/v1`
 - 通义千问：`http://你的机器IP:8094/v1`
 - 小米 MiMo：`http://你的机器IP:8095/v1`
+- 本地 DeepSeek：`http://你的机器IP:8096/v1`
 
 API Key 可以填任意非空字符串，真正访问上游用的是 `configs/model-keys.env` 里的 key。
 
@@ -76,6 +84,7 @@ curl http://127.0.0.1:8092/health
 curl http://127.0.0.1:8093/health
 curl http://127.0.0.1:8094/health
 curl http://127.0.0.1:8095/health
+curl http://127.0.0.1:8096/health
 ```
 
 也可以查看暴露给 Codex 的模型名：
@@ -139,6 +148,7 @@ bridge 会先把这些名称映射到上游厂商模型名。
 ├── scripts/
 │   ├── start-all.sh
 │   ├── start-deepseek.sh
+│   ├── start-deepseek-local.sh
 │   ├── start-mimo.sh
 │   ├── start-qwen.sh
 │   ├── start.sh

@@ -20,6 +20,12 @@ DASHSCOPE_API_KEY=your-key ./scripts/start-qwen.sh
 MIMO_API_KEY=your-key ./scripts/start-mimo.sh
 ```
 
+If local DeepSeek is running at `http://127.0.0.1:8000`, no key is needed:
+
+```bash
+./scripts/start-deepseek-local.sh
+```
+
 You can also override the port inline:
 
 ```bash
@@ -57,6 +63,7 @@ Default port map:
 - `8093` -> DeepSeek
 - `8094` -> Qwen
 - `8095` -> MiMo
+- `8096` -> local DeepSeek, no key required
 
 Use these Base URLs in Codex:
 
@@ -64,6 +71,7 @@ Use these Base URLs in Codex:
 - DeepSeek: `http://your-host-ip:8093/v1`
 - Qwen: `http://your-host-ip:8094/v1`
 - MiMo: `http://your-host-ip:8095/v1`
+- local DeepSeek: `http://your-host-ip:8096/v1`
 
 The Codex client API key can be any non-empty string. Upstream keys come from `configs/model-keys.env`.
 
@@ -76,6 +84,7 @@ curl http://127.0.0.1:8092/health
 curl http://127.0.0.1:8093/health
 curl http://127.0.0.1:8094/health
 curl http://127.0.0.1:8095/health
+curl http://127.0.0.1:8096/health
 ```
 
 List models exposed to Codex:
@@ -128,6 +137,7 @@ See:
 ├── scripts/
 │   ├── start-all.sh
 │   ├── start-deepseek.sh
+│   ├── start-deepseek-local.sh
 │   ├── start-mimo.sh
 │   ├── start-qwen.sh
 │   ├── start.sh

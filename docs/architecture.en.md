@@ -12,7 +12,7 @@
 ### Single-service mode
 
 - pass the key inline on the command line
-- run `./scripts/start-zhipu.sh` / `./scripts/start-deepseek.sh` / `./scripts/start-qwen.sh` / `./scripts/start-mimo.sh`
+- run `./scripts/start-zhipu.sh` / `./scripts/start-deepseek.sh` / `./scripts/start-deepseek-local.sh` / `./scripts/start-qwen.sh` / `./scripts/start-mimo.sh`
 
 ### Multi-service mode
 
@@ -29,6 +29,17 @@
 - `translators/responses_openai.py`: request and response translation
 - `upstreams/openai.py`: upstream HTTP transport
 - `request_capture.py`: optional protocol capture
+
+## Local Upstreams
+
+When an upstream URL points to `127.0.0.1`, `localhost`, or `::1`, the bridge bypasses proxy environment variables and connects directly to the local service. This prevents local model servers from being accidentally routed through HTTP/HTTPS proxies.
+
+The default local DeepSeek route is:
+
+- URL: `http://127.0.0.1:8000/v1`
+- model: `deepseek-v4-pro`
+- port: `8096`
+- API key: not required
 
 ## Codex Tool History Guards
 

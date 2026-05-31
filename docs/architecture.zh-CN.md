@@ -12,7 +12,7 @@
 ### 单服务模式
 
 - 一行命令传 key
-- 执行 `./scripts/start-zhipu.sh` / `./scripts/start-deepseek.sh` / `./scripts/start-qwen.sh` / `./scripts/start-mimo.sh`
+- 执行 `./scripts/start-zhipu.sh` / `./scripts/start-deepseek.sh` / `./scripts/start-deepseek-local.sh` / `./scripts/start-qwen.sh` / `./scripts/start-mimo.sh`
 
 ### 多服务模式
 
@@ -29,6 +29,17 @@
 - `translators/responses_openai.py`: 负责请求和响应转换
 - `upstreams/openai.py`: 负责上游 HTTP 转发
 - `request_capture.py`: 负责可选抓包
+
+## 本地上游
+
+如果上游地址是 `127.0.0.1`、`localhost` 或 `::1`，bridge 会自动绕过系统代理环境变量，直接访问本机服务。这是为了避免本地模型服务被错误转发到 HTTP/HTTPS 代理。
+
+本地 DeepSeek 默认配置为：
+
+- 地址：`http://127.0.0.1:8000/v1`
+- 模型：`deepseek-v4-pro`
+- 端口：`8096`
+- API key：不需要
 
 ## Codex 工具历史保护
 

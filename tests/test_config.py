@@ -8,7 +8,7 @@ from codex_responses_bridge.config import load_single_service_from_env
 def test_load_services_from_yaml():
     config_path = Path(__file__).resolve().parents[1] / "configs" / "services.example.yaml"
     services = load_services_from_yaml(config_path)
-    assert len(services) == 5
+    assert len(services) == 6
     assert services[0].name == "glm-local-main"
     assert services[0].text_upstream.provider == "glm-code"
     assert services[0].multimodal_upstream is not None
@@ -18,9 +18,12 @@ def test_load_services_from_yaml():
     assert services[1].text_upstream.base_url == "https://open.bigmodel.cn/api/coding/paas/v4"
     assert services[2].model_aliases["GPT-5.5"] == "deepseek-v4-pro"
     assert services[2].model_aliases["GPT-5.4"] == "deepseek-v4-pro"
-    assert services[3].model_aliases["GPT-5.5"] == "qwen3.7-max"
-    assert services[3].model_aliases["GPT-5.4"] == "qwen3.7-max"
-    assert services[3].unknown_model_strategy == "default_upstream"
+    assert services[3].name == "deepseek-local"
+    assert services[3].text_upstream.base_url == "http://127.0.0.1:8000/v1"
+    assert services[3].text_upstream.api_key_env == ""
+    assert services[4].model_aliases["GPT-5.5"] == "qwen3.7-max"
+    assert services[4].model_aliases["GPT-5.4"] == "qwen3.7-max"
+    assert services[4].unknown_model_strategy == "default_upstream"
 
 
 def test_load_single_service_from_env_alias_override():
@@ -73,6 +76,30 @@ services:
         services = load_services_from_yaml(tmp)
         assert services[0].text_upstream.api_key == "direct-key-value"
         assert services[0].text_upstream.api_key_env == "OPENAI_API_KEY"
+    finally:
+        if tmp.exists():
+            tmp.unlink()
+
+
+def test_load_services_from_yaml_supports_keyless_upstream():
+    tmp = Path(__file__).resolve().parent / "_tmp_keyless_services.yaml"
+    tmp.write_text(
+        """
+language: zh-CN
+services:
+  - name: keyless-local
+    port: 9001
+    provider: deepseek
+    base_url: http://127.0.0.1:8000/v1
+    api_key_env: ""
+    model: deepseek-v4-pro
+""".strip(),
+        encoding="utf-8",
+    )
+    try:
+        services = load_services_from_yaml(tmp)
+        assert services[0].text_upstream.api_key == ""
+        assert services[0].text_upstream.api_key_env == ""
     finally:
         if tmp.exists():
             tmp.unlink()

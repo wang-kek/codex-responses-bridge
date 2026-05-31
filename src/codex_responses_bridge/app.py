@@ -22,7 +22,7 @@ from .translators.responses_openai import (
     stream_openai_chat_to_responses,
 )
 from .upstreams.base import select_upstream
-from .upstreams.openai import post_chat_completions, stream_chat_completions
+from .upstreams.openai import is_loopback_upstream, post_chat_completions, stream_chat_completions
 
 logger = logging.getLogger("codex_responses_bridge")
 
@@ -30,10 +30,12 @@ logger = logging.getLogger("codex_responses_bridge")
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     app.state.http_client = httpx.AsyncClient()
+    app.state.local_http_client = httpx.AsyncClient(trust_env=False)
     try:
         yield
     finally:
         await app.state.http_client.aclose()
+        await app.state.local_http_client.aclose()
 
 
 def create_app(service: ServiceConfig) -> FastAPI:
@@ -134,7 +136,11 @@ def create_app(service: ServiceConfig) -> FastAPI:
                 },
             )
 
-        client: httpx.AsyncClient = request.app.state.http_client
+        client: httpx.AsyncClient = (
+            request.app.state.local_http_client
+            if is_loopback_upstream(selected.config)
+            else request.app.state.http_client
+        )
         if upstream_payload.get("stream"):
             async def event_stream():
                 try:
