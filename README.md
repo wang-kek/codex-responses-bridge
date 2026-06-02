@@ -226,6 +226,19 @@ bridge 会先把这些名称映射到上游厂商模型名。
 
 见 [CHANGELOG.md](CHANGELOG.md)。
 
+## 打包发布
+
+macOS 下需使用 `gtar`（GNU tar）打包，避免 `._` 扩展属性和 xattr 残留。可通过 `brew install gnu-tar` 安装。
+
+```bash
+gtar czf ../codex-responses-bridge-linux-release-$(date +%Y%m%d-%H%M%S).tar.gz \
+  --exclude='._*' --exclude='.DS_Store' --exclude='.git' \
+  --exclude='.venv' --exclude='__pycache__' --exclude='*.egg-info' \
+  --exclude='configs/services.yaml' --exclude='configs/model-keys.env' \
+  --no-xattrs --owner=0 --group=0 --numeric-owner \
+  -C .. codex-responses-bridge
+```
+
 ## 开源协议
 
 本项目采用 [MIT License](LICENSE)。

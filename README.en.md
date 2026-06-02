@@ -215,6 +215,19 @@ See:
 
 See [CHANGELOG.md](CHANGELOG.md).
 
+## Release Packaging
+
+On macOS, use `gtar` (GNU tar) to avoid `._` extended attributes and xattr metadata. Install via `brew install gnu-tar`.
+
+```bash
+gtar czf ../codex-responses-bridge-linux-release-$(date +%Y%m%d-%H%M%S).tar.gz \
+  --exclude='._*' --exclude='.DS_Store' --exclude='.git' \
+  --exclude='.venv' --exclude='__pycache__' --exclude='*.egg-info' \
+  --exclude='configs/services.yaml' --exclude='configs/model-keys.env' \
+  --no-xattrs --owner=0 --group=0 --numeric-owner \
+  -C .. codex-responses-bridge
+```
+
 ## License
 
 MIT. See [LICENSE](LICENSE).
