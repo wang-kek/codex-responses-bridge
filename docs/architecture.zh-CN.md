@@ -12,7 +12,7 @@
 ### 单服务模式
 
 - 一行命令传 key
-- 执行 `./scripts/start-zhipu.sh` / `./scripts/start-deepseek.sh` / `./scripts/start-deepseek-local.sh` / `./scripts/start-qwen.sh` / `./scripts/start-mimo.sh`
+- 执行 `./scripts/start-glm-local.sh` / `./scripts/start-zhipu.sh` / `./scripts/start-deepseek.sh` / `./scripts/start-deepseek-local.sh` / `./scripts/start-qwen.sh` / `./scripts/start-mimo.sh`
 
 ### 多服务模式
 
@@ -38,8 +38,25 @@
 
 - 地址：`http://127.0.0.1:8000/v1`
 - 模型：`deepseek-v4-flash`
-- 端口：`8096`
-- API key：不需要
+- 端口：`8081`
+- API key：默认可不填；如果本地服务要求鉴权，可以使用 `DEEPSEEK_LOCAL_API_KEY`
+
+本地 GLM 默认配置为：
+
+- 地址：`http://192.168.1.232:8000/v1`
+- 模型：`glm-5.1-fp8`
+- 端口：`8080`
+- 文本 key：`LOCAL_GLM_API_KEY`
+- 多模态 key：`LOCAL_VLM_API_KEY`
+
+本地 DeepSeek 默认也带同一个多模态上游：
+
+- 地址：`http://192.168.1.251:33338/v1`
+- 模型：`Qwen/Qwen3-VL-8B-Instruct`
+- 端口：`8081` 或 `8083`
+- key：`LOCAL_VLM_API_KEY`
+
+也就是说，DeepSeek 只负责文本，上游图片输入会自动切到独立的多模态服务。若某个本地服务明确无鉴权，可在 YAML 中设置 `api_key_env: ""`。
 
 ## Codex 工具历史保护
 

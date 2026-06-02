@@ -12,7 +12,7 @@
 ### Single-service mode
 
 - pass the key inline on the command line
-- run `./scripts/start-zhipu.sh` / `./scripts/start-deepseek.sh` / `./scripts/start-deepseek-local.sh` / `./scripts/start-qwen.sh` / `./scripts/start-mimo.sh`
+- run `./scripts/start-glm-local.sh` / `./scripts/start-zhipu.sh` / `./scripts/start-deepseek.sh` / `./scripts/start-deepseek-local.sh` / `./scripts/start-qwen.sh` / `./scripts/start-mimo.sh`
 
 ### Multi-service mode
 
@@ -38,8 +38,25 @@ The default local DeepSeek route is:
 
 - URL: `http://127.0.0.1:8000/v1`
 - model: `deepseek-v4-flash`
-- port: `8096`
-- API key: not required
+- port: `8081`
+- API key: optional by default; use `DEEPSEEK_LOCAL_API_KEY` if your local service requires auth
+
+The default local GLM route is:
+
+- URL: `http://192.168.1.232:8000/v1`
+- model: `glm-5.1-fp8`
+- port: `8080`
+- text key: `LOCAL_GLM_API_KEY`
+- multimodal key: `LOCAL_VLM_API_KEY`
+
+The default DeepSeek routes also attach the same multimodal upstream:
+
+- URL: `http://192.168.1.251:33338/v1`
+- model: `Qwen/Qwen3-VL-8B-Instruct`
+- ports: `8081` and `8083`
+- key: `LOCAL_VLM_API_KEY`
+
+So DeepSeek stays text-only, while image input is routed to the separate multimodal service. If a local service is explicitly keyless, set `api_key_env: ""` in YAML.
 
 ## Codex Tool History Guards
 

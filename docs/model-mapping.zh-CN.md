@@ -37,6 +37,27 @@
 依据：
 
 - 本地服务默认只提供轻量档位，方便快速联调
+- 本地 DeepSeek 是否需要 API key 取决于服务部署方式；工程默认支持 `DEEPSEEK_LOCAL_API_KEY`，也支持显式 `api_key_env: ""` 无鉴权
+
+说明：
+
+- DeepSeek 本地和公网本身仍然只负责文本
+- 当前默认配置会为它们挂一个独立多模态上游：`http://192.168.1.251:33338/v1`
+- 如果后续确认某个 DeepSeek 路由本身就支持图像输入，再决定是否改回单上游
+
+### 本地 GLM
+
+- `GPT-5.5 -> glm-5.1-fp8`
+- `GPT-5.4 -> glm-5.1-fp8`
+- `GPT-5.4-mini -> glm-5.1-fp8`
+- `GPT-4.1 -> glm-5.1-fp8`
+- `GPT-4.1-mini -> glm-5.1-fp8`
+- `o4-mini -> glm-5.1-fp8`
+
+依据：
+
+- 本地 GLM 当前和 DeepSeek 默认配置共用同一个多模态上游
+- 文本与多模态都以本机测试地址为准，便于联调
 
 ### 智谱 GLM Code
 
@@ -105,7 +126,7 @@
 ```yaml
 services:
   - name: glm-code-main
-    port: 8091
+    port: 8082
     provider: glm-code
     base_url: https://open.bigmodel.cn/api/coding/paas/v4
     api_key_env: ZHIPU_API_KEY

@@ -14,16 +14,24 @@ def test_load_services_from_yaml():
     assert services[0].multimodal_upstream is not None
     assert services[0].host == "0.0.0.0"
     assert services[0].model_aliases["GPT-5.5"] == "glm-5.1-fp8"
-    assert services[1].model_aliases["GPT-5.5"] == "glm-5.1"
-    assert services[1].text_upstream.base_url == "https://open.bigmodel.cn/api/coding/paas/v4"
-    assert services[2].model_aliases["GPT-5.5"] == "deepseek-v4-pro"
-    assert services[2].model_aliases["GPT-5.4"] == "deepseek-v4-pro"
-    assert services[3].name == "deepseek-local"
-    assert services[3].text_upstream.base_url == "http://127.0.0.1:8000/v1"
-    assert services[3].text_upstream.api_key_env == ""
-    assert services[3].text_upstream.model == "deepseek-v4-flash"
-    assert services[3].model_aliases["GPT-5.5"] == "deepseek-v4-flash"
-    assert services[3].model_aliases["GPT-5.4"] == "deepseek-v4-flash"
+    assert services[1].name == "deepseek-local"
+    assert services[1].text_upstream.base_url == "http://127.0.0.1:8000/v1"
+    assert services[1].text_upstream.api_key_env == "DEEPSEEK_LOCAL_API_KEY"
+    assert services[1].text_upstream.model == "deepseek-v4-flash"
+    assert services[1].multimodal_upstream is not None
+    assert services[1].multimodal_upstream.provider == "local-vlm"
+    assert services[1].multimodal_upstream.base_url == "http://192.168.1.251:33338/v1"
+    assert services[1].multimodal_upstream.model == "Qwen/Qwen3-VL-8B-Instruct"
+    assert services[1].model_aliases["GPT-5.5"] == "deepseek-v4-flash"
+    assert services[1].model_aliases["GPT-5.4"] == "deepseek-v4-flash"
+    assert services[2].model_aliases["GPT-5.5"] == "glm-5.1"
+    assert services[2].text_upstream.base_url == "https://open.bigmodel.cn/api/coding/paas/v4"
+    assert services[3].model_aliases["GPT-5.5"] == "deepseek-v4-pro"
+    assert services[3].model_aliases["GPT-5.4"] == "deepseek-v4-pro"
+    assert services[3].multimodal_upstream is not None
+    assert services[3].multimodal_upstream.provider == "local-vlm"
+    assert services[3].multimodal_upstream.base_url == "http://192.168.1.251:33338/v1"
+    assert services[3].multimodal_upstream.model == "Qwen/Qwen3-VL-8B-Instruct"
     assert services[4].model_aliases["GPT-5.5"] == "qwen3.7-max"
     assert services[4].model_aliases["GPT-5.4"] == "qwen3.7-max"
     assert services[4].unknown_model_strategy == "default_upstream"
@@ -103,6 +111,37 @@ services:
         services = load_services_from_yaml(tmp)
         assert services[0].text_upstream.api_key == ""
         assert services[0].text_upstream.api_key_env == ""
+    finally:
+        if tmp.exists():
+            tmp.unlink()
+
+
+def test_load_services_from_yaml_skips_disabled_services():
+    tmp = Path(__file__).resolve().parent / "_tmp_disabled_services.yaml"
+    tmp.write_text(
+        """
+language: zh-CN
+services:
+  - name: disabled-local
+    enabled: false
+    port: 9100
+    provider: deepseek
+    base_url: http://127.0.0.1:8000/v1
+    model: deepseek-v4-flash
+  - name: enabled-public
+    enabled: true
+    port: 9101
+    provider: deepseek
+    base_url: https://api.deepseek.com/v1
+    model: deepseek-v4-pro
+""".strip(),
+        encoding="utf-8",
+    )
+    try:
+        services = load_services_from_yaml(tmp)
+        assert len(services) == 1
+        assert services[0].name == "enabled-public"
+        assert services[0].port == 9101
     finally:
         if tmp.exists():
             tmp.unlink()

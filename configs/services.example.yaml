@@ -5,7 +5,8 @@ capture_directory: ./captures
 
 services:
   - name: glm-local-main
-    port: 8091
+    enabled: true
+    port: 8080
     provider: glm-code
     base_url: http://192.168.1.232:8000/v1
     api_key_env: LOCAL_GLM_API_KEY
@@ -24,8 +25,31 @@ services:
       GPT-4.1-mini: glm-5.1-fp8
       o4-mini: glm-5.1-fp8
 
+  - name: deepseek-local
+    enabled: true
+    port: 8081
+    provider: deepseek
+    base_url: http://127.0.0.1:8000/v1
+    # 如果本地服务不需要鉴权，DEEPSEEK_LOCAL_API_KEY 留空即可。
+    # 如果你明确想禁用鉴权读取，也可以改成 api_key_env: ""
+    api_key_env: DEEPSEEK_LOCAL_API_KEY
+    model: deepseek-v4-flash
+    # DeepSeek 本身只处理文本；图片输入会自动切到这个多模态上游。
+    multimodal_provider: local-vlm
+    multimodal_base_url: http://192.168.1.251:33338/v1
+    multimodal_api_key_env: LOCAL_VLM_API_KEY
+    multimodal_model: Qwen/Qwen3-VL-8B-Instruct
+    model_aliases:
+      GPT-5.4-mini: deepseek-v4-flash
+      GPT-5.4: deepseek-v4-flash
+      GPT-5.5: deepseek-v4-flash
+      GPT-4.1: deepseek-v4-flash
+      GPT-4.1-mini: deepseek-v4-flash
+      o4-mini: deepseek-v4-flash
+
   - name: glm-public-coder
-    port: 8092
+    enabled: true
+    port: 8082
     provider: glm-code
     base_url: https://open.bigmodel.cn/api/coding/paas/v4
     api_key_env: ZHIPU_API_KEY
@@ -40,12 +64,18 @@ services:
       o4-mini: glm-5-turbo
 
   - name: deepseek-public
-    port: 8093
+    enabled: true
+    port: 8083
     provider: deepseek
     base_url: https://api.deepseek.com/v1
     api_key_env: DEEPSEEK_API_KEY
     # api_key: your-key
     model: deepseek-v4-pro
+    # DeepSeek 本身只处理文本；图片输入会自动切到这个多模态上游。
+    multimodal_provider: local-vlm
+    multimodal_base_url: http://192.168.1.251:33338/v1
+    multimodal_api_key_env: LOCAL_VLM_API_KEY
+    multimodal_model: Qwen/Qwen3-VL-8B-Instruct
     model_aliases:
       GPT-5.5: deepseek-v4-pro
       GPT-5.4: deepseek-v4-pro
@@ -54,22 +84,9 @@ services:
       GPT-4.1-mini: deepseek-v4-flash
       o4-mini: deepseek-v4-flash
 
-  - name: deepseek-local
-    port: 8096
-    provider: deepseek
-    base_url: http://127.0.0.1:8000/v1
-    api_key_env: ""
-    model: deepseek-v4-flash
-    model_aliases:
-      GPT-5.4-mini: deepseek-v4-flash
-      GPT-5.4: deepseek-v4-flash
-      GPT-5.5: deepseek-v4-flash
-      GPT-4.1: deepseek-v4-flash
-      GPT-4.1-mini: deepseek-v4-flash
-      o4-mini: deepseek-v4-flash
-
   - name: qwen-public
-    port: 8094
+    enabled: true
+    port: 8084
     provider: qwen37-token
     base_url: https://dashscope.aliyuncs.com/compatible-mode/v1
     api_key_env: DASHSCOPE_API_KEY
@@ -84,7 +101,8 @@ services:
       o4-mini: qwen3.6-flash
 
   - name: mimo-public
-    port: 8095
+    enabled: true
+    port: 8085
     provider: mimo
     base_url: https://api.xiaomimimo.com/v1
     api_key_env: MIMO_API_KEY

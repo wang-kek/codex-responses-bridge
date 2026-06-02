@@ -1,5 +1,37 @@
 # Changelog
 
+## 0.2.0 - 2026-06-02
+
+在 Rocky Linux 8 + Python 3.8 环境下完成全部代理链路验证，面向生产部署优化。
+
+### 启动与部署
+
+- 新增 `scripts/start-glm-local.sh`：一行命令启动本地 GLM 代理（含多模态）。
+- 新增 `scripts/stop-all.sh`：停止所有后台服务。
+- 新增 `scripts/status-all.sh`：查看各端口运行状态。
+- `start-all.sh` 支持 `--daemon` 后台运行模式，PID 写入 `.bridge.pid`。
+- `start-all.sh` 默认优先读取 `configs/services.yaml`，不再硬编码 example 路径。
+- 启动脚本自动检测 Python 3.8+（`python` 或 `python3`），兼容 Rocky Linux 8。
+- 每个服务增加 `enabled: true/false` 开关，关闭的服务不启动、不占端口。
+
+### 配置简化
+
+- `services.yaml` 中 DeepSeek 本地/公网默认挂载多模态上游 `Qwen/Qwen3-VL-8B-Instruct`。
+- 模型映射统一维护在 `configs/services.yaml` 和 `src/codex_responses_bridge/config.py`。
+- `.gitignore` 补充排除运行时文件：`configs/services.yaml`、`*.tar.gz`、`run/`、`*.pid`。
+
+### 协议转换
+
+- 本地 loopback 上游绕过系统代理环境变量，避免 `http_proxy` 干扰。
+- `config.py` 中 `load_services_from_yaml` 过滤 `enabled: false` 的服务。
+- `model-keys.env.example` 补充 `LOCAL_VLM_API_KEY` 说明。
+
+### 文档更新
+
+- README（中/英）补全 `stop-all.sh`、`status-all.sh`、`start-glm-local.sh`。
+- 仓库结构树同步更新。
+- 架构文档和模型映射文档同步更新。
+
 ## 0.1.0 - 2026-05-31
 
 首个可用版本，目标是把 Codex Desktop / Codex CLI 的 `/v1/responses` 请求稳定转换到常见 OpenAI Chat 兼容上游。

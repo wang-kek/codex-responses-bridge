@@ -19,3 +19,9 @@ captures/
 .env.*
 configs/model-keys.env
 manual_testbed/
+configs/services.yaml
+*.tar.gz
+run/
+.venv*/
+*.pid
+._*

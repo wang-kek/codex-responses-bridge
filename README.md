@@ -20,16 +20,36 @@ DASHSCOPE_API_KEY=你的key ./scripts/start-qwen.sh
 MIMO_API_KEY=你的key ./scripts/start-mimo.sh
 ```
 
-本地 DeepSeek 如果运行在 `http://127.0.0.1:8000`，不需要 key，默认走 `deepseek-v4-flash`：
+本地 GLM 如果运行在 `http://192.168.1.232:8000/v1`，默认走 `glm-5.1-fp8`，并且支持多模态上游：
+
+```bash
+LOCAL_GLM_API_KEY=你的本地key LOCAL_VLM_API_KEY=你的多模态key ./scripts/start-glm-local.sh
+```
+
+本地 DeepSeek 如果运行在 `http://127.0.0.1:8000/v1`，默认走 `deepseek-v4-flash`。如果你的本地服务不需要鉴权，可以直接启动：
 
 ```bash
 ./scripts/start-deepseek-local.sh
 ```
 
+如果本地服务也要求 key，可以这样启动：
+
+```bash
+DEEPSEEK_LOCAL_API_KEY=你的本地key ./scripts/start-deepseek-local.sh
+```
+
+默认还会带上一个多模态上游：
+
+- 地址：`http://192.168.1.251:33338/v1`
+- 模型：`Qwen/Qwen3-VL-8B-Instruct`
+- key：`LOCAL_VLM_API_KEY`
+
+也就是说，DeepSeek 负责文本，图片输入会自动切到这个多模态上游。
+
 如果你想改端口，也可以直接叠加：
 
 ```bash
-ZHIPU_API_KEY=你的key PORT=8092 ./scripts/start-zhipu.sh
+ZHIPU_API_KEY=你的key PORT=8082 ./scripts/start-zhipu.sh
 ```
 
 启动后，默认监听 `0.0.0.0`。
@@ -44,8 +64,11 @@ ZHIPU_API_KEY=你的key PORT=8092 ./scripts/start-zhipu.sh
 
 - `ZHIPU_API_KEY`
 - `DEEPSEEK_API_KEY`
+- `DEEPSEEK_LOCAL_API_KEY`
 - `DASHSCOPE_API_KEY`
 - `MIMO_API_KEY`
+- `LOCAL_GLM_API_KEY`
+- `LOCAL_VLM_API_KEY`
 
 然后启动：
 
@@ -53,44 +76,78 @@ ZHIPU_API_KEY=你的key PORT=8092 ./scripts/start-zhipu.sh
 ./scripts/start-all.sh
 ```
 
+如果要后台运行：
+
+```bash
+./scripts/start-all.sh --daemon
+```
+
+停止全部服务：
+
+```bash
+./scripts/stop-all.sh
+```
+
+查看状态：
+
+```bash
+./scripts/status-all.sh
+```
+
 多端口配置在这里：
 
-[configs/services.example.yaml](configs/services.example.yaml)
+[configs/services.yaml](configs/services.yaml)
+
+每个服务都可以单独用 `enabled: true/false` 控制是否启动；设成 `false` 后，这个服务会被直接跳过，对应端口也不会建立。`./scripts/start-all.sh` 默认优先读取 `configs/services.yaml`。
 
 默认端口对应关系：
 
-- `8092` -> 智谱公网
-- `8093` -> DeepSeek
-- `8094` -> 通义千问
-- `8095` -> 小米 MiMo
-- `8096` -> 本地 DeepSeek，`deepseek-v4-flash`，无需 key
+- `8080` -> 本地 GLM，`glm-5.1-fp8`，支持 `LOCAL_GLM_API_KEY` 和 `LOCAL_VLM_API_KEY`
+- `8081` -> 本地 DeepSeek，`deepseek-v4-flash`，默认可无 key，也支持 `DEEPSEEK_LOCAL_API_KEY`
+- `8082` -> 智谱公网
+- `8083` -> DeepSeek 公网，文本走 DeepSeek，多模态走 `Qwen/Qwen3-VL-8B-Instruct`
+- `8084` -> 通义千问
+- `8085` -> 小米 MiMo
 
 Codex 客户端里填写：
 
-- 智谱公网：`http://你的机器IP:8092/v1`
-- DeepSeek：`http://你的机器IP:8093/v1`
-- 通义千问：`http://你的机器IP:8094/v1`
-- 小米 MiMo：`http://你的机器IP:8095/v1`
-- 本地 DeepSeek：`http://你的机器IP:8096/v1`
+- 本地 GLM：`http://你的机器IP:8080/v1`
+- 本地 DeepSeek：`http://你的机器IP:8081/v1`
+- 智谱公网：`http://你的机器IP:8082/v1`
+- DeepSeek：`http://你的机器IP:8083/v1`
+- 通义千问：`http://你的机器IP:8084/v1`
+- 小米 MiMo：`http://你的机器IP:8085/v1`
 
 API Key 可以填任意非空字符串，真正访问上游用的是 `configs/model-keys.env` 里的 key。
+
+## Key 配置规则
+
+上游鉴权支持两种写法：
+
+- `api_key_env: SOME_KEY`：从环境变量或 `configs/model-keys.env` 读取。
+- `api_key: your-key`：直接写在 YAML 中，优先级高于 `api_key_env`。
+
+如果确实是无鉴权本地服务，可以把 `api_key_env` 写成空字符串 `""`。不建议把公网 key 写进 YAML，避免误提交。
+
+多模态上游也一样，例如 `LOCAL_VLM_API_KEY` 会被 `multimodal_api_key_env: LOCAL_VLM_API_KEY` 使用。
 
 ## 验证服务
 
 启动后可以先检查健康状态：
 
 ```bash
-curl http://127.0.0.1:8092/health
-curl http://127.0.0.1:8093/health
-curl http://127.0.0.1:8094/health
-curl http://127.0.0.1:8095/health
-curl http://127.0.0.1:8096/health
+curl http://127.0.0.1:8080/health
+curl http://127.0.0.1:8081/health
+curl http://127.0.0.1:8082/health
+curl http://127.0.0.1:8083/health
+curl http://127.0.0.1:8084/health
+curl http://127.0.0.1:8085/health
 ```
 
 也可以查看暴露给 Codex 的模型名：
 
 ```bash
-curl http://127.0.0.1:8092/v1/models
+curl http://127.0.0.1:8080/v1/models
 ```
 
 ## 当前支持
@@ -131,6 +188,12 @@ bridge 会先把这些名称映射到上游厂商模型名。
 
 [docs/model-mapping.zh-CN.md](docs/model-mapping.zh-CN.md)
 
+## 多模态现状
+
+- 本地 GLM 默认带多模态上游适配。
+- DeepSeek 本地和 DeepSeek 公网本身仍然只负责文本，但默认也都挂了一个独立多模态上游。
+- 当前默认多模态上游地址是 `http://192.168.1.251:33338/v1`，模型是 `Qwen/Qwen3-VL-8B-Instruct`，通过 `LOCAL_VLM_API_KEY` 鉴权。
+
 ## 仓库结构
 
 ```text
@@ -147,12 +210,15 @@ bridge 会先把这些名称映射到上游厂商模型名。
 │   └── model-mapping.zh-CN.md
 ├── scripts/
 │   ├── start-all.sh
+│   ├── start-glm-local.sh
 │   ├── start-deepseek.sh
 │   ├── start-deepseek-local.sh
 │   ├── start-mimo.sh
 │   ├── start-qwen.sh
 │   ├── start.sh
-│   └── start-zhipu.sh
+│   ├── start-zhipu.sh
+│   ├── stop-all.sh
+│   └── status-all.sh
 └── src/
 ```
 

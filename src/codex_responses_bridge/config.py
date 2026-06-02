@@ -67,6 +67,18 @@ def _as_bool(value: Optional[str], default: bool = False) -> bool:
     return value.strip().lower() in {"1", "true", "yes", "on"}
 
 
+def _coerce_bool(value: Any, default: bool = False) -> bool:
+    if value is None:
+        return default
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)):
+        return bool(value)
+    if isinstance(value, str):
+        return value.strip().lower() in {"1", "true", "yes", "on"}
+    return default
+
+
 def _build_upstream_config(raw: Dict[str, Any], fallback_provider: str = "custom") -> UpstreamConfig:
     provider = (raw.get("provider") or fallback_provider).strip()
     base_url = (raw.get("base_url") or DEFAULT_PRESET_BASE_URLS.get(provider) or "").rstrip("/")
@@ -259,6 +271,8 @@ def load_services_from_yaml(path: Union[str, os.PathLike]) -> List[ServiceConfig
     default_unknown_model_strategy = defaults.get("unknown_model_strategy", "default_upstream")
     services = []
     for item in data.get("services") or []:
+        if not _coerce_bool(item.get("enabled", True), default=True):
+            continue
         text_upstream = _build_flat_upstream_config(item)
         if text_upstream is None:
             text_upstream = _resolve_upstream_from_entry(
@@ -300,6 +314,6 @@ def load_services_from_yaml(path: Union[str, os.PathLike]) -> List[ServiceConfig
 
 def load_runtime_services() -> List[ServiceConfig]:
     if _as_bool(os.environ.get("CRB_USE_CONFIG_FILE"), default=False):
-        config_file = os.environ.get("CRB_CONFIG_FILE", "./configs/services.example.yaml").strip()
+        config_file = os.environ.get("CRB_CONFIG_FILE", "./configs/services.yaml").strip()
         return load_services_from_yaml(config_file)
     return [load_single_service_from_env()]

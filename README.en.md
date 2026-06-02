@@ -20,16 +20,36 @@ DASHSCOPE_API_KEY=your-key ./scripts/start-qwen.sh
 MIMO_API_KEY=your-key ./scripts/start-mimo.sh
 ```
 
-If local DeepSeek is running at `http://127.0.0.1:8000`, no key is needed. It defaults to `deepseek-v4-flash`:
+If local GLM is running at `http://192.168.1.232:8000/v1`, it defaults to `glm-5.1-fp8` and supports a multimodal upstream:
+
+```bash
+LOCAL_GLM_API_KEY=your-local-key LOCAL_VLM_API_KEY=your-mm-key ./scripts/start-glm-local.sh
+```
+
+If local DeepSeek is running at `http://127.0.0.1:8000/v1`, it defaults to `deepseek-v4-flash`. If your local service does not require auth, run:
 
 ```bash
 ./scripts/start-deepseek-local.sh
 ```
 
+If your local service requires a key, run:
+
+```bash
+DEEPSEEK_LOCAL_API_KEY=your-local-key ./scripts/start-deepseek-local.sh
+```
+
+By default it also carries a multimodal upstream:
+
+- URL: `http://192.168.1.251:33338/v1`
+- model: `Qwen/Qwen3-VL-8B-Instruct`
+- key: `LOCAL_VLM_API_KEY`
+
+So DeepSeek handles text, while image input is routed to that multimodal upstream.
+
 You can also override the port inline:
 
 ```bash
-ZHIPU_API_KEY=your-key PORT=8092 ./scripts/start-zhipu.sh
+ZHIPU_API_KEY=your-key PORT=8082 ./scripts/start-zhipu.sh
 ```
 
 Default host is `0.0.0.0`.
@@ -44,8 +64,11 @@ Copy it to `configs/model-keys.env` and fill:
 
 - `ZHIPU_API_KEY`
 - `DEEPSEEK_API_KEY`
+- `DEEPSEEK_LOCAL_API_KEY`
 - `DASHSCOPE_API_KEY`
 - `MIMO_API_KEY`
+- `LOCAL_GLM_API_KEY`
+- `LOCAL_VLM_API_KEY`
 
 Then run:
 
@@ -53,44 +76,78 @@ Then run:
 ./scripts/start-all.sh
 ```
 
+To run in the background:
+
+```bash
+./scripts/start-all.sh --daemon
+```
+
+Stop all services:
+
+```bash
+./scripts/stop-all.sh
+```
+
+Check status:
+
+```bash
+./scripts/status-all.sh
+```
+
 Multi-port service definitions live in:
 
-[configs/services.example.yaml](configs/services.example.yaml)
+[configs/services.yaml](configs/services.yaml)
+
+Each service can be controlled independently with `enabled: true/false`; when set to `false`, the service is skipped and its port is never bound. `./scripts/start-all.sh` now prefers `configs/services.yaml`.
 
 Default port map:
 
-- `8092` -> Zhipu public
-- `8093` -> DeepSeek
-- `8094` -> Qwen
-- `8095` -> MiMo
-- `8096` -> local DeepSeek, `deepseek-v4-flash`, no key required
+- `8080` -> local GLM, `glm-5.1-fp8`, supports `LOCAL_GLM_API_KEY` and `LOCAL_VLM_API_KEY`
+- `8081` -> local DeepSeek, `deepseek-v4-flash`, key optional via `DEEPSEEK_LOCAL_API_KEY`
+- `8082` -> Zhipu public
+- `8083` -> DeepSeek public, text via DeepSeek and multimodal via `Qwen/Qwen3-VL-8B-Instruct`
+- `8084` -> Qwen
+- `8085` -> MiMo
 
 Use these Base URLs in Codex:
 
-- Zhipu public: `http://your-host-ip:8092/v1`
-- DeepSeek: `http://your-host-ip:8093/v1`
-- Qwen: `http://your-host-ip:8094/v1`
-- MiMo: `http://your-host-ip:8095/v1`
-- local DeepSeek: `http://your-host-ip:8096/v1`
+- local GLM: `http://your-host-ip:8080/v1`
+- local DeepSeek: `http://your-host-ip:8081/v1`
+- Zhipu public: `http://your-host-ip:8082/v1`
+- DeepSeek public: `http://your-host-ip:8083/v1`
+- Qwen: `http://your-host-ip:8084/v1`
+- MiMo: `http://your-host-ip:8085/v1`
 
 The Codex client API key can be any non-empty string. Upstream keys come from `configs/model-keys.env`.
+
+## Key Rules
+
+Upstream auth supports two forms:
+
+- `api_key_env: SOME_KEY`: read the key from an environment variable or `configs/model-keys.env`.
+- `api_key: your-key`: put the key directly in YAML. This takes precedence over `api_key_env`.
+
+For a truly keyless local service, set `api_key_env: ""`. Do not put public cloud keys directly in YAML if the file may be committed.
+
+Multimodal upstreams follow the same rule. For example, `LOCAL_VLM_API_KEY` is used by `multimodal_api_key_env: LOCAL_VLM_API_KEY`.
 
 ## Check Services
 
 After startup, check health:
 
 ```bash
-curl http://127.0.0.1:8092/health
-curl http://127.0.0.1:8093/health
-curl http://127.0.0.1:8094/health
-curl http://127.0.0.1:8095/health
-curl http://127.0.0.1:8096/health
+curl http://127.0.0.1:8080/health
+curl http://127.0.0.1:8081/health
+curl http://127.0.0.1:8082/health
+curl http://127.0.0.1:8083/health
+curl http://127.0.0.1:8084/health
+curl http://127.0.0.1:8085/health
 ```
 
 List models exposed to Codex:
 
 ```bash
-curl http://127.0.0.1:8092/v1/models
+curl http://127.0.0.1:8080/v1/models
 ```
 
 ## Supported
@@ -120,6 +177,12 @@ See:
 
 [docs/model-mapping.zh-CN.md](docs/model-mapping.zh-CN.md)
 
+## Multimodal status
+
+- Local GLM ships with a multimodal upstream by default.
+- Local DeepSeek and public DeepSeek still use DeepSeek only for text, but both now attach an independent multimodal upstream.
+- The default multimodal upstream is `http://192.168.1.251:33338/v1` with model `Qwen/Qwen3-VL-8B-Instruct`, authenticated by `LOCAL_VLM_API_KEY`.
+
 ## Repository layout
 
 ```text
@@ -136,12 +199,15 @@ See:
 │   └── model-mapping.zh-CN.md
 ├── scripts/
 │   ├── start-all.sh
+│   ├── start-glm-local.sh
 │   ├── start-deepseek.sh
 │   ├── start-deepseek-local.sh
 │   ├── start-mimo.sh
 │   ├── start-qwen.sh
 │   ├── start.sh
-│   └── start-zhipu.sh
+│   ├── start-zhipu.sh
+│   ├── stop-all.sh
+│   └── status-all.sh
 └── src/
 ```
 
